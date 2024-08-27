@@ -1,38 +1,87 @@
-.App {
+/* App.css */
+
+.main-container {
+  margin-top: 50px;
+}
+
+.main-paper {
+  padding: 40px;
+  border-radius: 15px;
+  background-color: #ffffff; /* Plain white background */
+  border: 1px solid #dddddd; /* Light grey border */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.header-text {
+  color: #000000; /* Black text */
+  font-weight: bold;
   text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.text-field {
+  margin-bottom: 20px;
+  font-size: 1rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.button {
+  background-color: #ffffff; /* White background */
+  color: #000000; /* Black text */
+  font-weight: bold;
+  border-radius: 5px;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #dddddd; /* Light grey border */
+  transition: background-color 0.3s, border-color 0.3s;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.button:hover {
+  background-color: #f0f0f0; /* Slightly darker on hover */
+  border-color: #cccccc; /* Slightly darker border on hover */
+  color: var(--variant-outlinedColor);
 }
 
-.App-link {
-  color: #61dafb;
+.table-header {
+  background-color: #f5f5f5; /* Light grey background */
+  color: #000000; /* Black text */
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 10px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.alert {
+  border: 1px solid #dddddd; /* Light grey border */
+  background-color: #f9f9f9; /* Very light grey background */
+  color: #333333; /* Dark grey text */
+  font-weight: bold;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background-color: #ffffff; /* White background */
+}
+
+table th, table td {
+  padding: 12px;
+  text-align: left;
+  color: #000000; /* Black text */
+  border-bottom: 1px solid #dddddd; /* Light grey border */
+}
+
+table tr:nth-child(even) {
+  background-color: #f9f9f9; /* Light grey background for even rows */
+}
+
+table tr:hover {
+  background-color: #eeeeee; /* Slightly darker grey for hover */
+}
+
+.icon-button {
+  color: #000000; /* Black icon color */
+}
+
+.icon-button:hover {
+  color: #555555; /* Darker grey on hover */
 }

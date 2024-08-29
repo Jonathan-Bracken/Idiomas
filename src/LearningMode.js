@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { TextField, Button, Typography, Box, Alert, FormControlLabel, Checkbox } from '@mui/material';
-import { getEntriesByLanguage, updateEntry } from './dataStorage';
+import { getEntriesByLanguageAndCategory, updateEntry } from './dataStorage';
 
 function LearningMode({ setMode }) {
   const [selectedLanguage, setSelectedLanguage] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [currentEntry, setCurrentEntry] = useState(null);
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -11,7 +12,7 @@ function LearningMode({ setMode }) {
   const [answered, setAnswered] = useState(false);
 
   const handleLearningStart = () => {
-    const entries = getEntriesByLanguage(selectedLanguage);
+    const entries = getEntriesByLanguageAndCategory(selectedLanguage, selectedCategory);
     if (entries.length > 0) {
       const randomEntry = entries[Math.floor(Math.random() * entries.length)];
       setCurrentEntry(randomEntry);
@@ -19,7 +20,7 @@ function LearningMode({ setMode }) {
       setAnswered(false);
       setCorrect(false);
     } else {
-      alert('No entries found for this language.');
+      alert('No entries found for this language and category.');
     }
   };
 
@@ -47,15 +48,6 @@ function LearningMode({ setMode }) {
     setCorrect(false);
   };
 
-  const renderWithLineBreaks = (text) => {
-    return text.split('\n').map((line, index) => (
-      <span key={index}>
-        {line}
-        <br />
-      </span>
-    ));
-  };
-
   return (
     <Box>
       {!currentEntry ? (
@@ -67,6 +59,15 @@ function LearningMode({ setMode }) {
             variant="outlined"
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value)}
+            className="text-field"
+          />
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Select Category"
+            variant="outlined"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             className="text-field"
           />
           <Button
@@ -128,7 +129,9 @@ function LearningMode({ setMode }) {
           </Button>
           {feedback && (
             <Alert severity={correct ? 'success' : 'error'} sx={{ marginTop: 2 }} className="alert">
-              {renderWithLineBreaks(feedback)}
+              {feedback.split('\n').map((line, index) => (
+                <Typography key={index}>{line}</Typography>
+              ))}
             </Alert>
           )}
           {answered && (

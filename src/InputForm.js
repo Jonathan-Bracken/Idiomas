@@ -7,13 +7,15 @@ function InputForm({ setMode }) {
   const [learningLanguage, setLearningLanguage] = useState('');
   const [singleTranslation, setSingleTranslation] = useState('');
   const [longTranslation, setLongTranslation] = useState('');
+  const [category, setCategory] = useState('');
 
   const handleSubmit = () => {
-    saveEntry({ englishWord, learningLanguage, singleTranslation, longTranslation });
+    saveEntry({ englishWord, learningLanguage, singleTranslation, longTranslation, category });
     setEnglishWord('');
     setLearningLanguage('');
     setSingleTranslation('');
     setLongTranslation('');
+    setCategory('');
     alert('Entry saved!');
   };
 
@@ -35,6 +37,15 @@ function InputForm({ setMode }) {
         variant="outlined"
         value={learningLanguage}
         onChange={(e) => setLearningLanguage(e.target.value)}
+        className="text-field"
+      />
+      <TextField
+        fullWidth
+        margin="normal"
+        label="Category"
+        variant="outlined"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
         className="text-field"
       />
       <TextField

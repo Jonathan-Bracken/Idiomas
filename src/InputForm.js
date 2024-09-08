@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box } from '@mui/material';
+import { TextField, Button, Box, Alert, FormControl, Select, MenuItem, InputLabel } from '@mui/material';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+import DOMPurify from 'dompurify'; // For sanitizing rich text input
 import { saveEntry } from './dataStorage';
 
 function InputForm({ setMode }) {
@@ -8,19 +11,48 @@ function InputForm({ setMode }) {
   const [singleTranslation, setSingleTranslation] = useState('');
   const [longTranslation, setLongTranslation] = useState('');
   const [category, setCategory] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Travel', 'Work', 'Numbers', 'Colors'];
 
   const handleSubmit = () => {
-    saveEntry({ englishWord, learningLanguage, singleTranslation, longTranslation, category });
+    const storedEntries = JSON.parse(localStorage.getItem('languageEntries')) || [];
+    const existingEntry = storedEntries.find(entry =>
+      entry.englishWord.toLowerCase() === englishWord.toLowerCase() &&
+      entry.learningLanguage.toLowerCase() === learningLanguage.toLowerCase()
+    );
+
+    if (existingEntry) {
+      setErrorMessage(`The word "${englishWord}" already exists in ${learningLanguage}.`);
+      return;
+    }
+
+    const sanitizedTranslation = DOMPurify.sanitize(longTranslation);
+
+    saveEntry({
+      englishWord,
+      learningLanguage,
+      singleTranslation,
+      longTranslation: sanitizedTranslation,
+      category
+    });
+
     setEnglishWord('');
     setLearningLanguage('');
     setSingleTranslation('');
     setLongTranslation('');
     setCategory('');
+    setErrorMessage('');
     alert('Entry saved!');
   };
 
   return (
     <Box component="form" noValidate autoComplete="off">
+      {errorMessage && (
+        <Alert severity="error" sx={{ marginBottom: 2 }}>
+          {errorMessage}
+        </Alert>
+      )}
       <TextField
         fullWidth
         margin="normal"
@@ -39,15 +71,19 @@ function InputForm({ setMode }) {
         onChange={(e) => setLearningLanguage(e.target.value)}
         className="text-field"
       />
-      <TextField
-        fullWidth
-        margin="normal"
-        label="Category"
-        variant="outlined"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        className="text-field"
-      />
+      <FormControl fullWidth margin="normal">
+        <InputLabel>Category</InputLabel>
+        <Select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          {categories.map((category) => (
+            <MenuItem key={category} value={category}>
+              {category}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       <TextField
         fullWidth
         margin="normal"
@@ -57,15 +93,11 @@ function InputForm({ setMode }) {
         onChange={(e) => setSingleTranslation(e.target.value)}
         className="text-field"
       />
-      <TextField
-        fullWidth
-        margin="normal"
-        label="Longer Translation and Notes"
-        variant="outlined"
-        multiline
-        rows={4}
+      <ReactQuill
+        theme="snow"
         value={longTranslation}
-        onChange={(e) => setLongTranslation(e.target.value)}
+        onChange={setLongTranslation}
+        placeholder="Enter detailed translation and notes here..."
         className="text-field"
       />
       <Button
@@ -86,7 +118,7 @@ function InputForm({ setMode }) {
         onClick={() => setMode('learning')}
         className="button"
       >
-        Switch to Learning Mode
+        Start Learning
       </Button>
       <Button
         variant="outlined"
@@ -96,7 +128,7 @@ function InputForm({ setMode }) {
         onClick={() => setMode('wordTable')}
         className="button"
       >
-        Switch to Word Table Mode
+        View Dictionary
       </Button>
     </Box>
   );

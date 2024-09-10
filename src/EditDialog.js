@@ -9,7 +9,7 @@ function EditDialog({ entry, open, onClose, onReload }) {
   const [editedCategory, setEditedCategory] = useState(entry.category || 'None');
   const [editedLongTranslation, setEditedLongTranslation] = useState(entry.longTranslation);
 
-  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Travel', 'Work', 'Numbers', 'Colors'];
+  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Clothes', 'Travel', 'Work', 'Home', 'Animals', 'Numbers', 'Colours', 'Time'];
 
   const handleSaveEdits = () => {
     const sanitizedTranslation = DOMPurify.sanitize(editedLongTranslation); // Sanitize the long translation

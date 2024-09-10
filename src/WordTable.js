@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import DOMPurify from 'dompurify';
-import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import EditIcon from '@mui/icons-material/Edit'; // Edit button for editing words
+import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, MenuItem, Select, FormControl, InputLabel, Pagination } from '@mui/material';
 import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
+import WordTableRow from './WordTableRow';
 import { getAllEntriesByLanguage, deleteEntry, updateEntry, saveEntry } from './dataStorage';
 
 function WordTable({ setMode }) {
@@ -13,13 +11,16 @@ function WordTable({ setMode }) {
   const [wordTable, setWordTable] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-  const [importFileName, setImportFileName] = useState(''); // For import file name
-  const [editMode, setEditMode] = useState(false); // To track if editing
-  const [editedCategory, setEditedCategory] = useState(''); // For editing category
-  const [editedLongTranslation, setEditedLongTranslation] = useState(''); // For editing long translation
+  const [importFileName, setImportFileName] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [editedCategory, setEditedCategory] = useState('');
+  const [editedLongTranslation, setEditedLongTranslation] = useState('');
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
 
-  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Travel', 'Work', 'Numbers', 'Colors']; // Example categories
-  const languages = ['Spanish', 'French', 'German']; // Dropdown options for languages
+  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Travel', 'Work', 'Numbers', 'Colours'];
+  const languages = ['Spanish', 'French', 'German'];
 
   const handleWordTableLoad = () => {
     const entries = selectedLanguage 
@@ -91,6 +92,13 @@ function WordTable({ setMode }) {
     setWordTable(sortedEntries);
   };
 
+  // Pagination handling
+  const handlePageChange = (event, page) => {
+    setCurrentPage(page);
+  };
+
+  const displayedRows = wordTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
   // Export words to a JSON file
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(wordTable, null, 2)], { type: 'application/json' });
@@ -122,7 +130,6 @@ function WordTable({ setMode }) {
 
   return (
     <Box>
-      {/* Dropdown for selecting language */}
       <FormControl fullWidth margin="normal">
         <InputLabel>Select Language</InputLabel>
         <Select
@@ -138,7 +145,6 @@ function WordTable({ setMode }) {
         </Select>
       </FormControl>
 
-      {/* Dropdown for selecting category */}
       <FormControl fullWidth margin="normal">
         <InputLabel>Category</InputLabel>
         <Select
@@ -205,7 +211,6 @@ function WordTable({ setMode }) {
                 Category
                 {sortConfig.key === 'category' && (sortConfig.direction === 'ascending' ? <ArrowDropUp /> : <ArrowDropDown />)}
               </TableCell>
-              {/* Conditionally render the Language column if no language is selected */}
               {!selectedLanguage && (
                 <TableCell className="table-header" onClick={() => handleSort('learningLanguage')}>
                   Language
@@ -220,35 +225,30 @@ function WordTable({ setMode }) {
                 Last Practiced
                 {sortConfig.key === 'lastTested' && (sortConfig.direction === 'ascending' ? <ArrowDropUp /> : <ArrowDropDown />)}
               </TableCell>
-              <TableCell className="table-header">Actions</TableCell>
+              <TableCell className="table-header"> {/* Blank Header for Actions */}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {wordTable.map((entry, index) => (
-              <TableRow key={index}>
-                <TableCell>{entry.englishWord}</TableCell>
-                <TableCell>{entry.singleTranslation}</TableCell>
-                <TableCell>{entry.category || 'None'}</TableCell>
-                {/* Conditionally render the Language cell if no language is selected */}
-                {!selectedLanguage && <TableCell>{entry.learningLanguage}</TableCell>}
-                <TableCell>{entry.points}</TableCell>
-                <TableCell>{entry.lastTested ? new Date(entry.lastTested).toLocaleDateString() : 'Never'}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleEditEntry(entry)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteEntry(entry)} color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleResetScore(entry)} color="primary">
-                    <RefreshIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+            {displayedRows.map((entry, index) => (
+              <WordTableRow
+                key={index}
+                entry={entry}
+                onEdit={handleEditEntry}
+                onDelete={handleDeleteEntry}
+                onReset={handleResetScore}
+              />
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      <Pagination
+        count={Math.ceil(wordTable.length / rowsPerPage)}
+        page={currentPage}
+        onChange={handlePageChange}
+        sx={{ marginTop: 2, display: 'flex', justifyContent: 'center' }}
+      />
 
       <Button
         variant="outlined"

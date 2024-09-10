@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Alert, FormControl, Select, MenuItem, InputLabel } from '@mui/material';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Import Quill styles
@@ -7,13 +7,21 @@ import { saveEntry } from './dataStorage';
 
 function InputForm({ setMode }) {
   const [englishWord, setEnglishWord] = useState('');
-  const [learningLanguage, setLearningLanguage] = useState('');
+  const [learningLanguage, setLearningLanguage] = useState(localStorage.getItem('selectedLanguage') || ''); // Initialize from localStorage
   const [singleTranslation, setSingleTranslation] = useState('');
   const [longTranslation, setLongTranslation] = useState('');
   const [category, setCategory] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Travel', 'Work', 'Numbers', 'Colors'];
+  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Clothes', 'Travel', 'Work', 'Home', 'Animals', 'Numbers', 'Colours', 'Time'];
+  const languages = ['Spanish', 'French', 'German']; // Add languages to dropdown
+
+  // Update localStorage whenever the learningLanguage changes
+  useEffect(() => {
+    if (learningLanguage) {
+      localStorage.setItem('selectedLanguage', learningLanguage);
+    }
+  }, [learningLanguage]);
 
   const handleSubmit = () => {
     const storedEntries = JSON.parse(localStorage.getItem('languageEntries')) || [];
@@ -38,7 +46,6 @@ function InputForm({ setMode }) {
     });
 
     setEnglishWord('');
-    setLearningLanguage('');
     setSingleTranslation('');
     setLongTranslation('');
     setCategory('');
@@ -62,15 +69,22 @@ function InputForm({ setMode }) {
         onChange={(e) => setEnglishWord(e.target.value)}
         className="text-field"
       />
-      <TextField
-        fullWidth
-        margin="normal"
-        label="Language"
-        variant="outlined"
-        value={learningLanguage}
-        onChange={(e) => setLearningLanguage(e.target.value)}
-        className="text-field"
-      />
+
+      {/* Language dropdown to persist across entries */}
+      <FormControl fullWidth margin="normal">
+        <InputLabel>Language</InputLabel>
+        <Select
+          value={learningLanguage}
+          onChange={(e) => setLearningLanguage(e.target.value)}
+        >
+          {languages.map((language) => (
+            <MenuItem key={language} value={language}>
+              {language}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
       <FormControl fullWidth margin="normal">
         <InputLabel>Category</InputLabel>
         <Select
@@ -84,6 +98,7 @@ function InputForm({ setMode }) {
           ))}
         </Select>
       </FormControl>
+
       <TextField
         fullWidth
         margin="normal"
@@ -93,6 +108,7 @@ function InputForm({ setMode }) {
         onChange={(e) => setSingleTranslation(e.target.value)}
         className="text-field"
       />
+
       <ReactQuill
         theme="snow"
         value={longTranslation}
@@ -100,6 +116,7 @@ function InputForm({ setMode }) {
         placeholder="Enter detailed translation and notes here..."
         className="text-field"
       />
+
       <Button
         variant="contained"
         color="primary"

@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, MenuItem, Select, FormControl, InputLabel, Pagination } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, MenuItem, Select, FormControl, InputLabel, Pagination, Button, TextField } from '@mui/material';
 import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
 import WordTableRow from './WordTableRow';
 import { getAllEntriesByLanguage, deleteEntry, updateEntry, saveEntry } from './dataStorage';
 
 function WordTable({ setMode }) {
-  const [selectedLanguage, setSelectedLanguage] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('All'); // Default to "All"
+  const [selectedCategory, setSelectedCategory] = useState('All'); // Default to "All"
   const [wordTable, setWordTable] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
@@ -19,25 +19,19 @@ function WordTable({ setMode }) {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
-  const categories = ['None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Travel', 'Work', 'Numbers', 'Colours'];
-  const languages = ['Spanish', 'French', 'German'];
+  const categories = ['All', 'None', 'Verbs', 'Adjectives', 'Family', 'Sport', 'Food', 'Travel', 'Work', 'Numbers', 'Colours']; // Added "All"
+  const languages = ['All', 'Spanish', 'French', 'German']; // Added "All"
 
-  const handleWordTableLoad = () => {
-    const entries = selectedLanguage 
-      ? getAllEntriesByLanguage(selectedLanguage)
-      : JSON.parse(localStorage.getItem('languageEntries')) || [];
-    
-    const filteredEntries = selectedCategory 
-      ? entries.filter(entry => entry.category === selectedCategory)
-      : entries;
-
-    setWordTable(filteredEntries);
-  };
+  // Load all words on component mount
+  useEffect(() => {
+    const entries = JSON.parse(localStorage.getItem('languageEntries')) || [];
+    setWordTable(entries);
+  }, []); // Empty dependency array to run this effect once on mount
 
   const handleDeleteEntry = (entry) => {
     if (window.confirm(`Are you sure you want to delete the word "${entry.englishWord}"?`)) {
       deleteEntry(entry);
-      handleWordTableLoad();
+      setWordTable(prevTable => prevTable.filter(e => e !== entry));
     }
   };
 
@@ -47,7 +41,7 @@ function WordTable({ setMode }) {
       points: 0,
     };
     updateEntry(updatedEntry);
-    handleWordTableLoad();
+    setWordTable(prevTable => prevTable.map(e => e === entry ? updatedEntry : e));
   };
 
   const handleEditEntry = (entry) => {
@@ -69,7 +63,7 @@ function WordTable({ setMode }) {
       longTranslation: DOMPurify.sanitize(editedLongTranslation),
     };
     updateEntry(updatedEntry);
-    handleWordTableLoad();
+    setWordTable(prevTable => prevTable.map(e => e === selectedEntry ? updatedEntry : e));
     handleCloseDetails();
   };
 
@@ -97,7 +91,11 @@ function WordTable({ setMode }) {
     setCurrentPage(page);
   };
 
-  const displayedRows = wordTable.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const filteredEntries = wordTable
+    .filter(entry => selectedLanguage === 'All' || entry.learningLanguage === selectedLanguage)
+    .filter(entry => selectedCategory === 'All' || entry.category === selectedCategory);
+
+  const displayedRows = filteredEntries.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   // Export words to a JSON file
   const handleExport = () => {
@@ -105,7 +103,7 @@ function WordTable({ setMode }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${selectedLanguage || 'all_languages'}_words.json`;
+    link.download = `${selectedLanguage === 'All' ? 'all_languages' : selectedLanguage}_words.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -122,7 +120,7 @@ function WordTable({ setMode }) {
       importedWords.forEach(word => {
         saveEntry(word); // Add each imported word to the storage
       });
-      handleWordTableLoad(); // Reload the word table after importing
+      setWordTable(importedWords); // Set the imported words to the table
     };
 
     reader.readAsText(file);
@@ -130,6 +128,7 @@ function WordTable({ setMode }) {
 
   return (
     <Box>
+      {/* Dropdown for selecting language */}
       <FormControl fullWidth margin="normal">
         <InputLabel>Select Language</InputLabel>
         <Select
@@ -145,6 +144,7 @@ function WordTable({ setMode }) {
         </Select>
       </FormControl>
 
+      {/* Dropdown for selecting category */}
       <FormControl fullWidth margin="normal">
         <InputLabel>Category</InputLabel>
         <Select
@@ -158,16 +158,6 @@ function WordTable({ setMode }) {
           ))}
         </Select>
       </FormControl>
-
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{ marginTop: 2 }}
-        onClick={handleWordTableLoad}
-        className="button"
-      >
-        Load Word Table
-      </Button>
 
       {/* Export Button */}
       <Button
@@ -207,11 +197,13 @@ function WordTable({ setMode }) {
                 Translation
                 {sortConfig.key === 'singleTranslation' && (sortConfig.direction === 'ascending' ? <ArrowDropUp /> : <ArrowDropDown />)}
               </TableCell>
-              <TableCell className="table-header" onClick={() => handleSort('category')}>
-                Category
-                {sortConfig.key === 'category' && (sortConfig.direction === 'ascending' ? <ArrowDropUp /> : <ArrowDropDown />)}
-              </TableCell>
-              {!selectedLanguage && (
+              {selectedCategory === 'All' && (
+                <TableCell className="table-header" onClick={() => handleSort('category')}>
+                  Category
+                  {sortConfig.key === 'category' && (sortConfig.direction === 'ascending' ? <ArrowDropUp /> : <ArrowDropDown />)}
+                </TableCell>
+              )}
+              {!selectedLanguage || selectedLanguage === 'All' && (
                 <TableCell className="table-header" onClick={() => handleSort('learningLanguage')}>
                   Language
                   {sortConfig.key === 'learningLanguage' && (sortConfig.direction === 'ascending' ? <ArrowDropUp /> : <ArrowDropDown />)}
@@ -236,6 +228,8 @@ function WordTable({ setMode }) {
                 onEdit={handleEditEntry}
                 onDelete={handleDeleteEntry}
                 onReset={handleResetScore}
+                showLanguage={selectedLanguage === 'All'}  // Show language if "All" is selected
+                showCategory={selectedCategory === 'All'}  // Show category if "All" is selected
               />
             ))}
           </TableBody>
@@ -244,7 +238,7 @@ function WordTable({ setMode }) {
 
       {/* Pagination */}
       <Pagination
-        count={Math.ceil(wordTable.length / rowsPerPage)}
+        count={Math.ceil(filteredEntries.length / rowsPerPage)}
         page={currentPage}
         onChange={handlePageChange}
         sx={{ marginTop: 2, display: 'flex', justifyContent: 'center' }}

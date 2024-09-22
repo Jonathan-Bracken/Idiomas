@@ -1,5 +1,10 @@
 /* App.css */
 
+/* Prevent zoom on text inputs for iOS */
+input, textarea, select {
+  font-size: 16px;
+}
+
 .main-container {
   margin-top: 50px;
 }

@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import DOMPurify from 'dompurify';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, MenuItem, Select, FormControl, InputLabel, Pagination, Button, Typography } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, MenuItem, Select, FormControl, InputLabel, Pagination, Button, Typography, TextField } from '@mui/material';
 import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
 import WordTableRow from './WordTableRow';
 import EditDialog from './EditDialog'; // Import EditDialog
-import { getAllEntriesByLanguage, deleteEntry, updateEntry, saveEntry } from './dataStorage';
+import { deleteEntry, updateEntry, saveEntry } from './dataStorage';
 
-function WordTable({ setMode }) {
+function WordTable() {
   const [selectedLanguage, setSelectedLanguage] = useState('All'); // Default to "All"
   const [selectedCategory, setSelectedCategory] = useState('All'); // Default to "All"
+  const [englishFilter, setEnglishFilter] = useState(''); // Default to "All"
+  const [translationFilter, setTranslationFilter] = useState(''); // Default to "All"
   const [wordTable, setWordTable] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [importFileName, setImportFileName] = useState('');
   const [editMode, setEditMode] = useState(false);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
 
@@ -79,7 +80,9 @@ function WordTable({ setMode }) {
 
   const filteredEntries = wordTable
     .filter(entry => selectedLanguage === 'All' || entry.learningLanguage === selectedLanguage)
-    .filter(entry => selectedCategory === 'All' || entry.category === selectedCategory);
+    .filter(entry => selectedCategory === 'All' || entry.category === selectedCategory)
+    .filter(entry => entry.englishWord.toLowerCase().includes(englishFilter.toLowerCase())) // Filter by English word
+    .filter(entry => entry.singleTranslation.toLowerCase().includes(translationFilter.toLowerCase())); // Filter by Translation;
 
   const displayedRows = filteredEntries.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
@@ -95,7 +98,7 @@ function WordTable({ setMode }) {
     document.body.removeChild(link);
   };
 
-  // Import words from a JSON file
+  // Import words from a JSON file and merge with existing table without adding duplicates
   const handleImport = (event) => {
     const file = event.target.files[0];
     setImportFileName(file.name); // Show file name
@@ -103,10 +106,31 @@ function WordTable({ setMode }) {
 
     reader.onload = (e) => {
       const importedWords = JSON.parse(e.target.result);
-      importedWords.forEach(word => {
-        saveEntry(word); // Add each imported word to the storage
+      const existingWords = JSON.parse(localStorage.getItem('languageEntries')) || []; // Load existing words from localStorage
+
+      // Create a map for quick lookup of existing words (e.g., by 'englishWord' and 'learningLanguage')
+      const existingWordsMap = new Map();
+      existingWords.forEach(word => {
+        const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
+        existingWordsMap.set(key, word);
       });
-      setWordTable(importedWords); // Set the imported words to the table
+
+      // Filter out imported words that already exist in the existing table
+      const newWords = importedWords.filter(word => {
+        const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
+        return !existingWordsMap.has(key); // Only add words that don't exist in the map
+      });
+
+      if (newWords.length > 0) {
+        // Merge new words with the existing words
+        const mergedWords = [...existingWords, ...newWords];
+
+        // Save merged words back to localStorage and update the table
+        mergedWords.forEach(word => saveEntry(word)); // Save each entry to localStorage
+        setWordTable(mergedWords); // Update the state with the merged word table
+      } else {
+        alert("No new words were added. All imported words already exist.");
+      }
     };
 
     reader.readAsText(file);
@@ -144,6 +168,26 @@ function WordTable({ setMode }) {
           ))}
         </Select>
       </FormControl>
+
+      {/* TextBox for filtering by English word */}
+      <TextField
+        fullWidth
+        margin="normal"
+        label="Filter by English Word"
+        variant="outlined"
+        value={englishFilter}
+        onChange={(e) => setEnglishFilter(e.target.value)}
+      />
+
+      {/* TextBox for filtering by Translation */}
+      <TextField
+        fullWidth
+        margin="normal"
+        label="Filter by Translation"
+        variant="outlined"
+        value={translationFilter}
+        onChange={(e) => setTranslationFilter(e.target.value)}
+      />
 
       {/* Export Button */}
       <Button

@@ -1,8 +1,23 @@
 /* App.css */
+/* iOS specific zoom fix */
+@media screen and (max-device-width: 768px) and (-webkit-min-device-pixel-ratio: 2) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
 
-/* Prevent zoom on text inputs for iOS */
+/* Global font size for inputs, textareas, and selects */
 input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* Ensure the body has a base font size */
+body {
   font-size: 16px;
+}
+
+html {
+  touch-action: manipulation;
 }
 
 .main-container {

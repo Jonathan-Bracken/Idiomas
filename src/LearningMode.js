@@ -3,7 +3,7 @@ import { TextField, Button, Typography, Box, Alert, FormControlLabel, Checkbox, 
 import DOMPurify from 'dompurify'; // For sanitizing the HTML content
 import { getEntriesByLanguageAndCategory, updateEntry } from './dataStorage';
 
-function LearningMode({ setMode, isScriptLoaded }) {
+function LearningMode({ isScriptLoaded }) {
   const [selectedLanguage, setSelectedLanguage] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [currentEntry, setCurrentEntry] = useState(null);
@@ -68,7 +68,6 @@ function LearningMode({ setMode, isScriptLoaded }) {
 
   const speakTranslation = () => {
     if (isScriptLoaded && typeof window.responsiveVoice !== 'undefined') {
-      console.log('Speaking translation...');
       const languageMap = {
         Spanish: 'Spanish Female',
         French: 'French Female',
@@ -122,41 +121,11 @@ function LearningMode({ setMode, isScriptLoaded }) {
           >
             Start Learning
           </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            fullWidth
-            sx={{ marginTop: 2 }}
-            onClick={() => setMode('input')}
-            className="button"
-          >
-            Add to Dictionary
-          </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            fullWidth
-            sx={{ marginTop: 2 }}
-            onClick={() => setMode('wordTable')}
-            className="button"
-          >
-            View Dictionary
-          </Button>
         </Box>
       ) : learningComplete ? (
         // Show "Learning complete!" message when there are no more words to learn
         <Alert severity="success" sx={{ marginTop: 2 }} className="alert">
           <Typography variant="h6">Learning complete!</Typography>
-          <Button
-            variant="contained"
-            color="secondary"
-            fullWidth
-            sx={{ marginTop: 2 }}
-            onClick={() => setMode('wordTable')}
-            className="button"
-          >
-            Back to Dictionary
-          </Button>
         </Alert>
       ) : (
         <Box>
@@ -216,16 +185,6 @@ function LearningMode({ setMode, isScriptLoaded }) {
                 className="button"
               >
                 Confirm and Next
-              </Button>
-              <Button
-                variant="contained"
-                color="secondary"
-                fullWidth
-                sx={{ marginTop: 2 }}
-                onClick={() => setMode('wordTable')}
-                className="button"
-              >
-                Back to Dictionary
               </Button>
               <Button
                 variant="contained"

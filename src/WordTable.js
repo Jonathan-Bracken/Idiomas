@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography, MenuItem, Select, FormControl, InputLabel, Pagination, Button, TextField } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box, MenuItem, Select, FormControl, InputLabel, Pagination, Button, Typography } from '@mui/material';
 import { ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
 import WordTableRow from './WordTableRow';
+import EditDialog from './EditDialog'; // Import EditDialog
 import { getAllEntriesByLanguage, deleteEntry, updateEntry, saveEntry } from './dataStorage';
 
 function WordTable({ setMode }) {
@@ -13,8 +14,6 @@ function WordTable({ setMode }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
   const [importFileName, setImportFileName] = useState('');
   const [editMode, setEditMode] = useState(false);
-  const [editedCategory, setEditedCategory] = useState('');
-  const [editedLongTranslation, setEditedLongTranslation] = useState('');
   
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
@@ -45,26 +44,13 @@ function WordTable({ setMode }) {
   };
 
   const handleEditEntry = (entry) => {
-    setSelectedEntry(entry);
-    setEditedCategory(entry.category || 'None');
-    setEditedLongTranslation(entry.longTranslation);
-    setEditMode(true);
+    setSelectedEntry(entry); // Set the entry to edit
+    setEditMode(true);       // Show the edit dialog
   };
 
   const handleCloseDetails = () => {
     setSelectedEntry(null);
     setEditMode(false);
-  };
-
-  const handleSaveEdits = () => {
-    const updatedEntry = {
-      ...selectedEntry,
-      category: editedCategory,
-      longTranslation: DOMPurify.sanitize(editedLongTranslation),
-    };
-    updateEntry(updatedEntry);
-    setWordTable(prevTable => prevTable.map(e => e === selectedEntry ? updatedEntry : e));
-    handleCloseDetails();
   };
 
   // Sorting functionality
@@ -244,62 +230,14 @@ function WordTable({ setMode }) {
         sx={{ marginTop: 2, display: 'flex', justifyContent: 'center' }}
       />
 
-      <Button
-        variant="outlined"
-        color="secondary"
-        fullWidth
-        sx={{ marginTop: 2 }}
-        onClick={() => setMode('input')}
-        className="button"
-      >
-        Add to Dictionary
-      </Button>
-      <Button
-        variant="outlined"
-        color="secondary"
-        fullWidth
-        sx={{ marginTop: 2 }}
-        onClick={() => setMode('learning')}
-        className="button"
-      >
-        Start Learning
-      </Button>
-
       {/* Edit Dialog */}
       {editMode && selectedEntry && (
-        <Dialog open={editMode} onClose={handleCloseDetails}>
-          <DialogTitle>Edit Entry</DialogTitle>
-          <DialogContent>
-            <Typography variant="h6">English Word: {selectedEntry.englishWord}</Typography>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={editedCategory}
-                onChange={(e) => setEditedCategory(e.target.value)}
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Longer Translation and Notes"
-              multiline
-              rows={4}
-              variant="outlined"
-              value={editedLongTranslation}
-              onChange={(e) => setEditedLongTranslation(e.target.value)}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDetails} color="secondary">Cancel</Button>
-            <Button onClick={handleSaveEdits} color="primary">Save Changes</Button>
-          </DialogActions>
-        </Dialog>
+        <EditDialog
+          entry={selectedEntry}
+          open={editMode}
+          onClose={handleCloseDetails}
+          onReload={() => setWordTable([...wordTable])} // Reload data after saving
+        />
       )}
     </Box>
   );

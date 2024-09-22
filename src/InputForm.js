@@ -127,26 +127,6 @@ function InputForm({ setMode }) {
       >
         Save Entry
       </Button>
-      <Button
-        variant="outlined"
-        color="secondary"
-        fullWidth
-        sx={{ marginTop: 2 }}
-        onClick={() => setMode('learning')}
-        className="button"
-      >
-        Start Learning
-      </Button>
-      <Button
-        variant="outlined"
-        color="secondary"
-        fullWidth
-        sx={{ marginTop: 2 }}
-        onClick={() => setMode('wordTable')}
-        className="button"
-      >
-        View Dictionary
-      </Button>
     </Box>
   );
 }

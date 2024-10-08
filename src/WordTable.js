@@ -86,55 +86,64 @@ function WordTable() {
 
   const displayedRows = filteredEntries.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
-  // Export words to a JSON file
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(wordTable, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${selectedLanguage === 'All' ? 'all_languages' : selectedLanguage}_words.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Export words to a JSON file without 'longTranslation'
+const handleExport = () => {
+  // Create a copy of the word table with 'longTranslation' excluded
+  const exportData = wordTable.map(word => {
+    const { longTranslation, ...rest } = word; // Exclude longTranslation
+    return rest;
+  });
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${selectedLanguage === 'All' ? 'all_languages' : selectedLanguage}_words.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Import words from a JSON file without 'longTranslation' and merge with existing table without adding duplicates
+const handleImport = (event) => {
+  const file = event.target.files[0];
+  setImportFileName(file.name); // Show file name
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const importedWords = JSON.parse(e.target.result);
+    const existingWords = JSON.parse(localStorage.getItem('languageEntries')) || []; // Load existing words from localStorage
+
+    // Create a map for quick lookup of existing words (e.g., by 'englishWord' and 'learningLanguage')
+    const existingWordsMap = new Map();
+    existingWords.forEach(word => {
+      const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
+      existingWordsMap.set(key, word);
+    });
+
+    // Filter out imported words that already exist in the existing table and exclude 'longTranslation'
+    const newWords = importedWords.filter(word => {
+      const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
+      return !existingWordsMap.has(key); // Only add words that don't exist in the map
+    }).map(word => {
+      const { longTranslation, ...rest } = word; // Exclude longTranslation from imported words
+      return rest;
+    });
+
+    if (newWords.length > 0) {
+      // Merge new words with the existing words
+      const mergedWords = [...existingWords, ...newWords];
+
+      // Save merged words back to localStorage and update the table
+      mergedWords.forEach(word => saveEntry(word)); // Save each entry to localStorage
+      setWordTable(mergedWords); // Update the state with the merged word table
+    } else {
+      alert("No new words were added. All imported words already exist.");
+    }
   };
 
-  // Import words from a JSON file and merge with existing table without adding duplicates
-  const handleImport = (event) => {
-    const file = event.target.files[0];
-    setImportFileName(file.name); // Show file name
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      const importedWords = JSON.parse(e.target.result);
-      const existingWords = JSON.parse(localStorage.getItem('languageEntries')) || []; // Load existing words from localStorage
-
-      // Create a map for quick lookup of existing words (e.g., by 'englishWord' and 'learningLanguage')
-      const existingWordsMap = new Map();
-      existingWords.forEach(word => {
-        const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
-        existingWordsMap.set(key, word);
-      });
-
-      // Filter out imported words that already exist in the existing table
-      const newWords = importedWords.filter(word => {
-        const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
-        return !existingWordsMap.has(key); // Only add words that don't exist in the map
-      });
-
-      if (newWords.length > 0) {
-        // Merge new words with the existing words
-        const mergedWords = [...existingWords, ...newWords];
-
-        // Save merged words back to localStorage and update the table
-        mergedWords.forEach(word => saveEntry(word)); // Save each entry to localStorage
-        setWordTable(mergedWords); // Update the state with the merged word table
-      } else {
-        alert("No new words were added. All imported words already exist.");
-      }
-    };
-
-    reader.readAsText(file);
-  };
+  reader.readAsText(file);
+};
 
   return (
     <Box>

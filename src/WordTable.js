@@ -121,7 +121,7 @@ const handleImport = (event) => {
       existingWordsMap.set(key, word);
     });
 
-    // Process imported words
+    // Iterate over imported words and update the map if conditions are met
     importedWords.forEach(word => {
       const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
       const existingWord = existingWordsMap.get(key);
@@ -152,13 +152,12 @@ const handleImport = (event) => {
     const mergedWords = Array.from(existingWordsMap.values());
 
     // Save merged words back to localStorage and update the table
-    mergedWords.forEach(word => saveEntry(word)); // Save each entry to localStorage
+    localStorage.setItem('languageEntries', JSON.stringify(mergedWords)); // Store merged words in localStorage
     setWordTable(mergedWords); // Update the state with the merged word table
   };
 
   reader.readAsText(file);
 };
-
 
   return (
     <Box>

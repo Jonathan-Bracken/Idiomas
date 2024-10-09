@@ -104,7 +104,7 @@ const handleExport = () => {
   document.body.removeChild(link);
 };
 
-// Import words from a JSON file without 'longTranslation' and merge with existing table without adding duplicates
+// Import words from a JSON file without 'longTranslation' and merge with existing table, with overwrite logic based on lastTested
 const handleImport = (event) => {
   const file = event.target.files[0];
   setImportFileName(file.name); // Show file name
@@ -121,29 +121,44 @@ const handleImport = (event) => {
       existingWordsMap.set(key, word);
     });
 
-    // Filter out imported words that already exist in the existing table and exclude 'longTranslation'
-    const newWords = importedWords.filter(word => {
+    // Process imported words
+    importedWords.forEach(word => {
       const key = `${word.englishWord.toLowerCase()}_${word.learningLanguage.toLowerCase()}`;
-      return !existingWordsMap.has(key); // Only add words that don't exist in the map
-    }).map(word => {
-      const { longTranslation, ...rest } = word; // Exclude longTranslation from imported words
-      return rest;
+      const existingWord = existingWordsMap.get(key);
+
+      if (existingWord) {
+        // Word already exists, check if we should overwrite based on 'lastTested'
+        const importedLastTested = new Date(word.lastTested);
+        const existingLastTested = new Date(existingWord.lastTested);
+
+        if (importedLastTested > existingLastTested) {
+          // Overwrite existing word with the imported one if it has a more recent 'lastTested'
+          const { longTranslation, ...rest } = word; // Exclude longTranslation from imported words
+          existingWordsMap.set(key, { ...existingWord, ...rest }); // Update the existing word
+        }
+      } else {
+        // New word, add 'points' and 'lastTested'
+        const newWord = {
+          ...word,
+          points: word.points || 0, // Ensure points are initialized
+          lastTested: word.lastTested || null, // Ensure lastTested is initialized
+        };
+        const { longTranslation, ...rest } = newWord; // Exclude longTranslation from new words
+        existingWordsMap.set(key, rest); // Add new word to the map
+      }
     });
 
-    if (newWords.length > 0) {
-      // Merge new words with the existing words
-      const mergedWords = [...existingWords, ...newWords];
+    // Convert map back to an array
+    const mergedWords = Array.from(existingWordsMap.values());
 
-      // Save merged words back to localStorage and update the table
-      mergedWords.forEach(word => saveEntry(word)); // Save each entry to localStorage
-      setWordTable(mergedWords); // Update the state with the merged word table
-    } else {
-      alert("No new words were added. All imported words already exist.");
-    }
+    // Save merged words back to localStorage and update the table
+    mergedWords.forEach(word => saveEntry(word)); // Save each entry to localStorage
+    setWordTable(mergedWords); // Update the state with the merged word table
   };
 
   reader.readAsText(file);
 };
+
 
   return (
     <Box>
